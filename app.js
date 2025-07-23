@@ -10,23 +10,34 @@ setTimeout(() => ac.abort(), 100000);
 
 (async () => {
   const commandFileHandler = await open("./command.txt", "r");
+  commandFileHandler.on("change", async () => {
+    // get size of out file
+    const size = (await commandFileHandler.stat()).size;
+    // allocate out buffer
+    const buff = Buffer.alloc(size);
+    // the location at which we want to start to filling our buffer
+    const offset = 0;
+    // how many bytes we want to read
+    const length = buff.byteLength;
+    // the position that we want to start reading the file
+    const position = 0;
+
+    // we allwase want to start read the whole contentr (from beganing all the way to the end)
+    const contentFile = await commandFileHandler.read(
+      buff,
+      offset,
+      length,
+      position
+    );
+    console.log(contentFile.buffer.toString("utf-8"));
+  });
 
   try {
+    // watcher...
     const watcher = watch(__filename, { signal });
     for await (const event of watcher) {
-      const size = (await commandFileHandler.stat()).size;
-      const buff = Buffer.alloc(size);
-      const offset = 0;
-      const length = buff.byteLength;
-      const position = 0;
-      const contentFile = await commandFileHandler.read(
-        buff,
-        offset,
-        length,
-        position
-      );
       if (event.eventType === "change") {
-        console.log(contentFile.buffer.toString("utf-8"));
+        commandFileHandler.emit("change");
       }
     }
   } catch (err) {
