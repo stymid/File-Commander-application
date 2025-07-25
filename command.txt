@@ -1,1 +1,1 @@
-create file ./commandd.txt
+delete file ./commandd.txt
