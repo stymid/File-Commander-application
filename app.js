@@ -1,7 +1,5 @@
 "use strict";
-
-import { watch, open, rm } from "node:fs/promises";
-
+import { watch, open, rm, rename } from "node:fs/promises";
 import { Buffer } from "node:buffer";
 
 const __filename = "command.txt";
@@ -32,10 +30,33 @@ async function deleteFile(path) {
     console.log(err);
   }
 }
+async function renameFile(oldPath, newPath) {
+  try {
+    await rename(oldPath, newPath);
+    console.log(`the file name ${oldPath} changed to ${newPath}`);
+  } catch (err) {
+    console.log("no such file or directory");
+  }
+}
+async function addToFile(path, content) {
+  console.log(`.${path}.`, `.${content}.`, 39);
+  const contentSize = content.length;
+  const buff = Buffer.from(content, "utf-8");
+  console.log(buff);
+
+  try {
+    const fileHandle = await open(path, "w");
+    fileHandle.write(buff, 0);
+  } catch (err) {
+    console.log("file doesn't exist");
+  }
+}
 
 (async () => {
-  const CREATE_FILE = "create file";
-  const DELETE_FILE = "delete file";
+  const CREATE_FILE = "create a file";
+  const DELETE_FILE = "delete the file";
+  const RENAME_FILE = "rename the file";
+  const ADD_TO_FILE = "add to the file";
 
   const commandFileHandler = await open("./command.txt", "r");
   commandFileHandler.on("change", async () => {
@@ -65,8 +86,25 @@ async function deleteFile(path) {
     // delete the file <path>
     if (command.includes(DELETE_FILE)) {
       const path = command.substring(DELETE_FILE.length + 1);
-
       deleteFile(path);
+    }
+
+    // rename a file:
+    // rename file <path> to <newPath>
+    if (command.includes(RENAME_FILE)) {
+      const _idx = command.indexOf(" to ");
+      const oldPath = command.substring(RENAME_FILE.length + 1, _idx);
+      const newPath = command.substring(_idx + 4);
+      renameFile(oldPath, newPath);
+    }
+
+    // add to a file:
+    // add to the file <path> this content: <newPath>
+    if (command.includes(ADD_TO_FILE)) {
+      const _idx = command.indexOf(" this content: ");
+      const path = command.substring(ADD_TO_FILE.length + 1, _idx);
+      const content = command.substring(_idx + 15);
+      addToFile(path, content);
     }
   });
 
